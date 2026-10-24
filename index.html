@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tạo phiếu học phí</title>
+<meta name="author" content="Hien Suri">
+<!-- © Bản quyền app thuộc về cô Hiền - Hien Suri -->
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{--bg:#eef3f1;--panel:#fff;--ink:#1d2b27;--mut:#62756f;--line:#d5e0dc;--pri:#2f8f7b;--pri-ink:#fff;--field:#f7faf9;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#131a18;--panel:#1c2623;--ink:#e8f0ed;--mut:#93a8a1;--line:#2f3e3a;--pri:#4fb8a1;--pri-ink:#0c1512;--field:#16201d}}
+:root[data-theme="dark"]{--bg:#131a18;--panel:#1c2623;--ink:#e8f0ed;--mut:#93a8a1;--line:#2f3e3a;--pri:#4fb8a1;--pri-ink:#0c1512;--field:#16201d}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Be Vietnam Pro",system-ui,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:16px;display:grid;gap:20px}
+@media(min-width:860px){.wrap{grid-template-columns:420px 1fr;align-items:start}.prev{position:sticky;top:16px}}
+h1{font-size:20px;margin:4px 0 0}
+.sub{color:var(--mut);margin:0 0 4px;font-size:13px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px}
+.panel h2{font-size:15px;margin:0}
+label{display:grid;gap:4px;font-size:13px;color:var(--mut);font-weight:500}
+input,textarea,select{font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:9px;padding:9px 10px;width:100%}
+input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--pri);outline-offset:1px}
+textarea{resize:vertical;min-height:84px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.days{display:flex;flex-wrap:wrap;gap:6px}
+.days label{display:flex;align-items:center;gap:5px;flex-direction:row;background:var(--field);border:1px solid var(--line);border-radius:8px;padding:6px 9px;color:var(--ink);cursor:pointer}
+.days input{width:auto;margin:0}
+button{font:inherit;font-weight:600;border:0;border-radius:10px;padding:10px 14px;cursor:pointer;background:var(--pri);color:var(--pri-ink)}
+button.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.saved{display:flex;flex-wrap:wrap;gap:6px}
+.saved button{padding:5px 10px;font-weight:500;font-size:13px}
+.hint{font-size:12px;color:var(--mut);margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{padding:6px 10px;font-size:13px;font-weight:600;background:var(--field);color:var(--ink);border:1px solid var(--line)}
+.chips button[aria-pressed="true"]{background:#c0452f;color:#fff;border-color:#c0452f;text-decoration:line-through}
+.chk{display:flex!important;flex-direction:row;align-items:center;gap:8px;color:var(--ink)}
+.chk input{width:auto;margin:0}
+/* receipt: fixed light palette so the exported image looks the same everywhere */
+.scroll{overflow-x:auto}
+#receipt{width:360px;margin:0 auto;background:#fff;border-radius:18px;overflow:hidden;color:#1f2d2a;font-family:"Be Vietnam Pro",system-ui,sans-serif;box-shadow:0 2px 14px rgba(0,0,0,.12)}
+.r-head{background:#6db3a6;color:#fff;text-align:center;padding:22px 16px 18px}
+.r-club{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;opacity:.92}
+.r-title{font-size:25px;font-weight:700;margin:6px 0 2px}
+.r-kind{font-size:12px;opacity:.85}
+.r-body{padding:16px 18px 20px}
+.r-line{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;font-size:14px;color:#5b6b66}
+.r-line b{color:#1f2d2a;font-weight:600}
+.r-line .nm{font-size:20px;font-weight:600}
+.r-extra{border-top:1px dashed #dfe7e4;font-size:13px}
+.r-extra b{color:#c0661a}
+.r-total{margin:12px 0 14px;border:1.5px solid #bfdad3;background:#f1f9f7;border-radius:14px;text-align:center;padding:14px 8px}
+.r-total small{display:block;font-size:12px;font-weight:700;color:#35514b}
+.r-total strong{font-size:32px;color:#1f6e5c;font-weight:700;letter-spacing:.01em}
+.r-sec{text-align:center;font-size:11px;font-weight:700;color:#35514b;margin:4px 0 8px;text-transform:uppercase}
+.r-dates{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;justify-items:stretch}
+.r-dates span{background:#dcefea;color:#2c6a5c;font-size:11px;font-weight:600;text-align:center;border-radius:5px;padding:5px 0}
+.r-dates span.x{background:#f3e3df;color:#b0584a;text-decoration:line-through}
+.r-abs b{color:#b0584a}
+.r-cmt{margin-top:6px;background:#fffbea;border:1px solid #f1e6b0;border-radius:12px;padding:12px;font-size:13px;line-height:1.55;color:#4a4a3a;white-space:pre-wrap}
+.r-note{margin-top:14px;text-align:center;font-style:italic;font-size:12.5px;color:#7a8884;white-space:pre-wrap}
+.r-qr{margin:16px auto 0;width:210px;border:1.5px dashed #6db3a6;border-radius:12px;padding:10px;text-align:center}
+.r-qr .t{font-size:11px;font-weight:700;color:#2c6a5c;margin-bottom:6px}
+.r-qr img{width:100%;display:block;border-radius:6px}
+.r-qr .b{font-size:12px;margin-top:6px;white-space:pre-wrap;color:#35514b;font-weight:600}
+dialog{border:0;border-radius:16px;padding:16px;background:var(--panel);color:var(--ink);max-width:420px;width:calc(100% - 24px);max-height:92vh;overflow:auto}
+dialog::backdrop{background:rgba(0,0,0,.55)}
+dialog img{width:100%;border-radius:10px;display:block;margin:10px 0}
+:root{--bg:#fff6e8;--panel:#fff;--ink:#4a3b5c;--mut:#8a7a9b;--line:#f3dfc8;--pri:#ff6f9f;--pri-ink:#fff;--field:#fffaf2;--dot1:#ffd9e6;--dot2:#d4ecff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#241c36;--panel:#2f2547;--ink:#fff1f6;--mut:#c4b4dc;--line:#4a3d6b;--pri:#ff8fb5;--pri-ink:#2a1633;--field:#271f3d;--dot1:#31284a;--dot2:#2b3350}}
+:root[data-theme="dark"]{--bg:#241c36;--panel:#2f2547;--ink:#fff1f6;--mut:#c4b4dc;--line:#4a3d6b;--pri:#ff8fb5;--pri-ink:#2a1633;--field:#271f3d;--dot1:#31284a;--dot2:#2b3350}
+body{font-family:"Nunito",system-ui,sans-serif;font-size:16px;background-color:var(--bg);background-image:radial-gradient(var(--dot1) 3px,transparent 3.5px),radial-gradient(var(--dot2) 3px,transparent 3.5px);background-size:48px 48px;background-position:0 0,24px 24px}
+h1,.panel h2,button{font-family:"Baloo 2","Nunito",system-ui,sans-serif}
+h1{font-size:30px;font-weight:800;color:var(--pri);line-height:1.15;text-shadow:0 3px 0 rgba(255,180,100,.45)}
+.sub{font-size:14px}
+.panel{border:3px solid var(--c,var(--line));box-shadow:0 5px 0 var(--c,var(--line));border-radius:24px;padding:18px}
+.panel:nth-of-type(2){--c:#ff9dbf}.panel:nth-of-type(3){--c:#ffcf4d}.panel:nth-of-type(4){--c:#6fd9b8}.panel:nth-of-type(5){--c:#82c8ff}.panel:nth-of-type(6){--c:#b99dff}
+.panel h2{font-size:20px;font-weight:700}
+label{font-weight:700;font-size:13.5px}
+input,textarea,select{border:2px solid var(--line);border-radius:14px;padding:10px 12px}
+input:focus,textarea:focus{border-color:var(--pri);outline:3px solid rgba(255,111,159,.28);outline-offset:0}
+button{border-radius:999px;font-weight:700;font-size:15px;padding:10px 20px;box-shadow:0 4px 0 rgba(0,0,0,.2);transition:transform .08s,box-shadow .08s}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.2)}
+button.sec{border:2px solid var(--line);box-shadow:0 3px 0 var(--line)}
+.days label{border-radius:999px;border-width:2px}
+.chips button{border-radius:999px;box-shadow:0 3px 0 var(--line)}
+#shot{font-size:19px;padding:12px 28px;background:linear-gradient(135deg,#ff7aa8,#ffa45c)}
+#receipt{font-family:"Nunito",system-ui,sans-serif;background:#fffdf7;border:4px solid #fff;border-radius:30px;box-shadow:0 0 0 4px #ffb3cb,0 12px 26px rgba(160,80,120,.28)}
+#receipt::after{content:"Cảm ơn phụ huynh đã đồng hành cùng bé 💖";display:block;text-align:center;padding:2px 12px 18px;font:700 14px "Baloo 2",sans-serif;color:#ff7aa8}
+.r-head{position:relative;background:linear-gradient(135deg,#ff8fb8,#ffb86b);padding:26px 16px 32px;margin-bottom:8px}
+.r-head::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:16px;background:radial-gradient(circle at 10px 0,transparent 10px,#fffdf7 10.5px) 0 0/20px 16px repeat-x}
+.dec{position:absolute;font-size:20px}.d1{top:10px;left:14px;transform:rotate(-12deg)}.d2{top:12px;right:14px;font-size:26px}.d3{bottom:24px;right:22px;font-size:22px}
+.r-club{font:700 15px "Baloo 2",sans-serif;letter-spacing:.02em;text-transform:none;opacity:1}
+.r-title{font:800 32px/1.1 "Baloo 2",sans-serif;text-shadow:0 3px 0 rgba(190,70,110,.4);margin:4px 0}
+.r-kind{display:inline-block;background:rgba(255,255,255,.35);border-radius:999px;padding:1px 14px;font-weight:700;font-size:13px;opacity:1}
+.r-body{padding:8px 18px 14px}
+.r-line{font-size:15px;color:#8a6f86;font-weight:600}
+.r-line b{color:#4a3b5c;font-weight:800}
+.r-line .nm{font:800 26px "Baloo 2",sans-serif;color:#ff5a8f}
+.r-extra{border-top:2px dashed #ffd0e0;font-size:14px}
+.r-extra b{color:#ff8a3d}
+.r-abs b{color:#8c6bd8}
+.r-total{background:#fff3b8;border:3px dashed #ffb400;border-radius:24px;padding:12px 8px 14px;margin:14px 0 16px}
+.r-total small{font:700 15px "Baloo 2",sans-serif;color:#b86a00}
+.r-total strong{font:800 40px/1.1 "Baloo 2",sans-serif;color:#ff5a8f;text-shadow:0 3px 0 rgba(255,180,0,.45)}
+.r-total i{font-style:normal;font-size:20px;margin-left:4px;color:#b86a00}
+.r-sec{font:700 15px "Baloo 2",sans-serif;color:#7a56c9;text-transform:none}
+.r-dates{gap:6px}
+.r-dates span{border-radius:999px;font-weight:800;padding:5px 0;font-size:12px}
+.r-dates span:nth-child(5n+1){background:#ffd9e6;color:#c23a6d}
+.r-dates span:nth-child(5n+2){background:#fff0b3;color:#a56a00}
+.r-dates span:nth-child(5n+3){background:#c9f3e5;color:#1c7a5e}
+.r-dates span:nth-child(5n+4){background:#d4ecff;color:#2a6aa8}
+.r-dates span:nth-child(5n+5){background:#e6dcff;color:#6b4bb8}
+.r-dates span.x{background:#eee;color:#a99;text-decoration:line-through}
+.r-cmt{background:repeating-linear-gradient(#fffbea 0 25px,#f3e3a8 25px 26px);border:2px solid #ffe08a;border-radius:18px;padding:5px 14px 6px;font-size:14px;line-height:26px;color:#5a4a3a;font-weight:600}
+.r-note{font-style:normal;background:#e9f7ff;border:2px dashed #9fd4f5;border-radius:18px;padding:10px 12px;font-size:13px;font-weight:600;color:#3f6c8f}
+.r-qr{width:220px;border:3px dashed #b99dff;border-radius:24px;background:#f6f1ff}
+.r-qr .t{font:700 15px "Baloo 2",sans-serif;color:#7a56c9}
+.r-qr img{border-radius:14px;background:#fff}
+dialog{border:3px solid #ff9dbf;border-radius:26px}
+
+/* ===== Giao diện bầu trời (app) — phiếu thu giữ nguyên ===== */
+:root,:root[data-theme="dark"]{color-scheme:light;--bg:#4fb3f6;--panel:#fff;--ink:#1c3a5e;--mut:#4f6f91;--line:#c9e4f6;--pri:#2fa84f;--pri-ink:#fff;--field:#f4fbff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:light;--bg:#4fb3f6;--panel:#fff;--ink:#1c3a5e;--mut:#4f6f91;--line:#c9e4f6;--pri:#2fa84f;--pri-ink:#fff;--field:#f4fbff}}
+body{background:linear-gradient(180deg,#4fb3f6 0,#8dcffb 55%,#c4e9ff 100%) fixed;min-height:100vh}
+.wrap,.copy{position:relative;z-index:1}
+h1{display:block;margin:0;padding:10px 16px 12px;text-align:center;font-size:30px;font-weight:800;color:#1f5fd6;-webkit-text-stroke:6px #fff;paint-order:stroke fill;text-shadow:none;background:linear-gradient(#cf8431,#a9641d);border:5px solid #6cb847;border-radius:26px;box-shadow:0 7px 0 #7a4a1b,0 12px 18px rgba(20,70,120,.3)}
+.sub{color:#fff;text-shadow:0 1px 3px rgba(10,60,120,.55);text-align:center;font-weight:700;margin-top:10px}
+.panel{border:0;border-radius:34px;padding:20px;background:linear-gradient(#fff,#f1f9ff);box-shadow:0 9px 0 #d3e9f8,0 16px 26px rgba(20,90,160,.28)}
+.panel:nth-of-type(2){--c:#4a9be8;--cb:#dcecff}.panel:nth-of-type(3){--c:#f0a640;--cb:#ffecc8}.panel:nth-of-type(4){--c:#a67be0;--cb:#eadcff}.panel:nth-of-type(5){--c:#5cb83c;--cb:#d9f5c9}.panel:nth-of-type(6){--c:#ee6f9f;--cb:#ffdbe9}
+.panel h2{justify-self:start;padding:2px 16px;border-radius:999px;background:var(--cb);border:3px solid var(--c);color:#1c3a5e;font-size:19px}
+label{color:#3f5f84}
+input,textarea,select{background:var(--field);border:2px solid #cfe6f5;border-radius:16px}
+input:focus,textarea:focus{border-color:#2fa84f;outline:3px solid rgba(47,168,79,.25)}
+button{background:linear-gradient(#3cc15f,#239a42);color:#fff;box-shadow:0 5px 0 #17702d}
+button:active{box-shadow:0 1px 0 #17702d}
+button.sec,.chips button{background:#fff;color:#1c3a5e;border:2px solid #c9e4f6;box-shadow:0 4px 0 #c9e4f6}
+button.sec:active,.chips button:active{box-shadow:0 1px 0 #c9e4f6}
+.chips button[aria-pressed="true"]{background:#e8574a;color:#fff;border-color:#e8574a;box-shadow:0 4px 0 #a93228}
+.days label{background:#fff;border-color:#c9e4f6;color:#1c3a5e}
+#shot{background:linear-gradient(#3cc15f,#239a42);box-shadow:0 6px 0 #17702d;font-size:20px;padding:12px 30px}
+dialog{border:4px solid #6cb847}
+.copy{width:max-content;max-width:calc(100% - 24px);margin:4px auto 22px;padding:8px 18px;border-radius:999px;background:rgba(255,255,255,.92);color:#1c3a5e;font:700 14px "Baloo 2","Nunito",sans-serif;text-align:center;box-shadow:0 4px 0 #d3e9f8}
+.copy b{color:#1f5fd6}
+.sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.sun{position:absolute;top:-60px;left:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle at 60% 60%,#ffeb91,#ffd23f);box-shadow:0 0 0 14px rgba(255,255,255,.28),0 0 0 32px rgba(255,255,255,.14)}
+.sun::before{content:"";position:absolute;left:92px;top:104px;width:12px;height:16px;border-radius:50%;background:#3a2a1a;box-shadow:30px 0 #3a2a1a}
+.sun::after{content:"";position:absolute;left:100px;top:132px;width:26px;height:14px;border-radius:0 0 26px 26px;background:#e0482a}
+.cloud{position:absolute;width:130px;height:40px;background:#fff;border-radius:999px;opacity:.95}
+.cloud::before,.cloud::after{content:"";position:absolute;background:#fff;border-radius:50%}
+.cloud::before{width:60px;height:60px;left:20px;top:-28px}
+.cloud::after{width:44px;height:44px;left:70px;top:-18px}
+.c1{top:90px;right:8%}.c2{top:62%;left:-30px;transform:scale(1.3)}.c3{top:40%;right:30%;transform:scale(.7);opacity:.7}
+.isle{position:absolute;width:130px;height:80px;background:linear-gradient(#6cc04a 0 26%,#8a5a34 26% 100%);clip-path:polygon(0 0,100% 0,88% 55%,52% 100%,18% 55%)}
+.i1{top:46%;left:-30px}.i2{top:20%;right:-30px;transform:scale(.8)}
+.rainbow{position:absolute;right:-190px;top:30%;width:440px;height:440px;border-radius:50%;background:radial-gradient(circle,transparent 0 52%,#a67be0 52% 58%,#5aa8f5 58% 64%,#5cc96a 64% 70%,#ffe45c 70% 76%,#f2a448 76% 82%,transparent 82%)}
+@media(max-width:859px){.rainbow,.isle,.c3{display:none}.sun{transform:scale(.7);transform-origin:0 0}}
+</style>
+</head>
+<body>
+<div class="sky" aria-hidden="true"><div class="sun"></div><div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div><div class="isle i1"></div><div class="isle i2"></div><div class="rainbow"></div></div>
+<div class="wrap">
+ <div class="ctl" style="display:grid;gap:14px">
+  <div><h1>Tạo phiếu học phí</h1><p class="sub">Nhập thông tin, phiếu bên cạnh cập nhật ngay. Xong bấm “Tạo ảnh” để gửi phụ huynh.</p></div>
+
+  <div class="panel">
+   <h2>🏫 Thông tin chung</h2>
+   <label>Tên lớp / câu lạc bộ<input id="club" value="CLB Ước Mơ Xanh"></label>
+   <div class="row">
+    <label>Tiêu đề phiếu<input id="title" value="Phiếu học phí"></label>
+    <label>Hình thức thu<input id="kind" value="Theo buổi"></label>
+   </div>
+   <label>Học sinh<input id="student" value="Duy Mạnh"></label>
+   <div class="saved" id="saved"></div>
+   <div class="btns"><button class="sec" id="saveStu" type="button">Lưu học sinh này</button></div>
+  </div>
+
+  <div class="panel">
+   <h2>💰 Học phí</h2>
+   <div class="row">
+    <label>Học phí / buổi (đ)<input id="fee" type="number" inputmode="numeric" value="80000"></label>
+    <label>Số buổi<input id="count" type="number" inputmode="numeric" value="24"></label>
+   </div>
+   <div class="row">
+    <label>Khoản thu thêm<input id="exLabel" value="Sách vở và đồ dùng học tập"></label>
+    <label>Số tiền (đ)<input id="exAmt" type="number" inputmode="numeric" value="300000"></label>
+   </div>
+   <p class="hint" id="calc"></p>
+  </div>
+
+  <div class="panel">
+   <h2>📅 Ngày đi học</h2>
+   <div class="row">
+    <label>Ngày bắt đầu<input id="start" type="date"></label>
+    <label>Số buổi cần tạo<input id="gen" type="number" inputmode="numeric" value="24"></label>
+   </div>
+   <div class="days" id="wd"></div>
+   <div class="btns"><button type="button" id="mk">Tạo danh sách ngày</button></div>
+   <label>Danh sách ngày (sửa tay được, cách nhau bằng dấu phẩy)<textarea id="dates" style="min-height:64px"></textarea></label>
+   <p class="hint">Có danh sách ngày thì số buổi được tính theo danh sách.</p>
+   <div style="font-size:13px;color:var(--mut);font-weight:500">Buổi nghỉ: bấm vào ngày học sinh nghỉ (không tính học phí)</div>
+   <div class="chips" id="chips"></div>
+   <label class="chk"><input type="checkbox" id="showAbs">Hiện buổi nghỉ trên phiếu (gạch ngang)</label>
+  </div>
+
+  <div class="panel">
+   <h2>💌 Nhận xét và lưu ý</h2>
+   <label>Nhận xét của giáo viên<textarea id="cmt">Duy Mạnh chăm ngoan và luôn cố gắng hoàn thành mọi nhiệm vụ học tập mà cô giao. Con biết nhận diện số và lượng; làm tính cộng trừ và so sánh trong phạm vi 10 ở mức độ cơ bản.</textarea></label>
+   <label>Lưu ý cho phụ huynh<textarea id="note">Phụ huynh vui lòng đóng học phí trước ngày 05 hằng tháng. Nếu con cần nghỉ, ba mẹ thông báo để cô sắp xếp lịch học bù cho con.</textarea></label>
+  </div>
+
+  <div class="panel">
+   <h2>🎁 Thanh toán</h2>
+   <label>Ảnh mã QR ngân hàng<input id="qr" type="file" accept="image/*"></label>
+   <label>Thông tin tài khoản (không bắt buộc)<textarea id="bank" style="min-height:60px" placeholder="Vietcombank - 0123456789&#10;NGUYEN VAN A"></textarea></label>
+   <p class="hint">Ảnh QR chỉ nằm trên máy bạn, không được tải đi đâu.</p>
+  </div>
+ </div>
+
+ <div class="prev">
+  <div class="scroll"><div id="receipt"></div></div>
+  <div class="btns" style="justify-content:center;margin-top:14px"><button type="button" id="shot">📸 Tạo ảnh để gửi</button></div>
+ </div>
+</div>
+
+<footer class="copy">© Bản quyền app thuộc về <b>cô Hiền - Hien Suri</b></footer>
+
+<dialog id="dlg">
+ <strong>Ảnh phiếu học phí</strong>
+ <p class="hint">Nhấn giữ vào ảnh rồi chọn “Lưu ảnh” (hoặc chuột phải → Lưu ảnh).</p>
+ <img id="out" alt="Phiếu học phí">
+ <div class="btns"><button class="sec" type="button" onclick="document.getElementById('dlg').close()">Đóng</button></div>
+</dialog>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>(Math.round(n)||0).toLocaleString('vi-VN');
+let qrData='';
+
+// weekday checkboxes
+const WD=[['2',1],['3',2],['4',3],['5',4],['6',5],['7',6],['CN',0]];
+$('wd').innerHTML=WD.map(([t,v],i)=>`<label><input type="checkbox" value="${v}" ${[0,2,4].includes(i)?'checked':''}>${t==='CN'?'CN':'T'+t}</label>`).join('');
+(function(){const d=new Date();$('start').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
+
+const pad=n=>String(n).padStart(2,'0');
+$('mk').onclick=()=>{
+  const days=[...document.querySelectorAll('#wd input:checked')].map(i=>+i.value);
+  const n=+$('gen').value||0; if(!$('start').value||!days.length||!n){return}
+  const [y,m,d]=$('start').value.split('-').map(Number);
+  let cur=new Date(y,m-1,d),out=[],guard=0;
+  while(out.length<n&&guard++<800){ if(days.includes(cur.getDay())) out.push(pad(cur.getDate())+'/'+pad(cur.getMonth()+1)); cur.setDate(cur.getDate()+1); }
+  $('dates').value=out.join(', '); render();
+};
+
+$('qr').onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader(); r.onload=()=>{qrData=r.result;render()}; r.readAsDataURL(f);
+};
+
+function dateList(){return $('dates').value.split(/[,\n;]+/).map(s=>s.trim()).filter(Boolean)}
+
+const absent=new Set();
+function drawChips(all){
+  const c=$('chips');
+  if(!all.length){c.innerHTML='<span class="hint">Tạo danh sách ngày ở trên để chọn buổi nghỉ.</span>';return}
+  c.innerHTML=all.map(d=>`<button type="button" data-d="${esc(d)}" aria-pressed="${absent.has(d)}">${esc(d)}</button>`).join('');
+  c.querySelectorAll('button').forEach(b=>b.onclick=()=>{const d=b.dataset.d;absent.has(d)?absent.delete(d):absent.add(d);render()});
+}
+function render(){
+  const all=dateList();
+  for(const a of [...absent]) if(!all.includes(a)) absent.delete(a);
+  const dl=all.filter(d=>!absent.has(d));
+  const count=all.length?dl.length:(+$('count').value||0);
+  drawChips(all);
+  const fee=+$('fee').value||0, ex=+$('exAmt').value||0;
+  const total=fee*count+ex;
+  $('calc').textContent=`${money(fee)} × ${count} buổi${ex?` + ${money(ex)}`:''} = ${money(total)} đ${absent.size?` (đã trừ ${absent.size} buổi nghỉ)`:''}`;
+  const cmt=$('cmt').value.trim(), note=$('note').value.trim(), bank=$('bank').value.trim();
+  $('receipt').innerHTML=`
+  <div class="r-head"><span class="dec d1">⭐</span><span class="dec d2">☁️</span><span class="dec d3">🌈</span><div class="r-club">🐥 ${esc($('club').value)}</div><div class="r-title">${esc($('title').value)}</div><div class="r-kind">${esc($('kind').value)}</div></div>
+  <div class="r-body">
+   <div class="r-line"><span>🧒 Học sinh</span><b class="nm">${esc($('student').value)}</b></div>
+   <div class="r-line"><span>🍎 Học phí / buổi</span><b>${money(fee)} đ</b></div>
+   <div class="r-line"><span>📚 Số buổi học</span><b>${count} buổi</b></div>
+   ${absent.size?`<div class="r-line r-abs"><span>🌙 Buổi nghỉ (không tính phí)</span><b>${absent.size} buổi</b></div>`:''}
+   ${ex?`<div class="r-line r-extra"><span>✏️ ${esc($('exLabel').value)}</span><b>+${money(ex)}đ</b></div>`:''}
+   <div class="r-total"><small>🎉 Tổng học phí 🎉</small><strong>${money(total)}<i>đ</i></strong></div>
+   ${(()=>{const show=$('showAbs').checked?all:dl;return show.length?`<div class="r-sec">📅 Ngày đi học</div><div class="r-dates">${show.map(d=>`<span${absent.has(d)?' class="x"':''}>${esc(d)}</span>`).join('')}</div>`:''})()}
+   ${cmt?`<div class="r-sec" style="margin-top:14px">⭐ Nhận xét của giáo viên ⭐</div><div class="r-cmt">${esc(cmt)}</div>`:''}
+   ${note?`<div class="r-note">💌 ${esc(note)}</div>`:''}
+   ${(qrData||bank)?`<div class="r-qr"><div class="t">🎁 Mã thanh toán</div>${qrData?`<img src="${qrData}" alt="Mã QR">`:''}${bank?`<div class="b">${esc(bank)}</div>`:''}</div>`:''}
+  </div>`;
+}
+document.querySelectorAll('.ctl input:not(#qr):not(#wd input),.ctl textarea').forEach(el=>el.addEventListener('input',render));
+
+// saved students (per-browser)
+const KEY='phieuhp_students';
+function loadSaved(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}}
+function writeSaved(a){try{localStorage.setItem(KEY,JSON.stringify(a))}catch(e){}}
+const FIELDS=['club','title','kind','student','fee','count','exLabel','exAmt','dates','cmt','note','bank'];
+function drawSaved(){
+  const a=loadSaved();
+  $('saved').innerHTML=a.length?a.map((s,i)=>`<button class="sec" type="button" data-i="${i}">${esc(s.student||'Chưa đặt tên')}</button>`).join(''):'';
+  $('saved').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const s=loadSaved()[+b.dataset.i]; if(!s)return;
+    FIELDS.forEach(f=>{if(s[f]!==undefined)$(f).value=s[f]});
+    absent.clear();(s.absent||[]).forEach(a=>absent.add(a));$('showAbs').checked=!!s.showAbs; render();
+  });
+}
+$('saveStu').onclick=()=>{
+  const s={};FIELDS.forEach(f=>s[f]=$(f).value);s.absent=[...absent];s.showAbs=$('showAbs').checked;
+  const a=loadSaved(); const i=a.findIndex(x=>x.student===s.student);
+  if(i>=0)a[i]=s; else a.push(s); writeSaved(a); drawSaved();
+};
+
+$('shot').onclick=async()=>{
+  const b=$('shot'); b.textContent='Đang tạo ảnh…'; b.disabled=true;
+  try{
+    const c=await html2canvas($('receipt'),{scale:2,backgroundColor:null,useCORS:true});
+    $('out').src=c.toDataURL('image/png'); $('dlg').showModal();
+  }catch(e){alert('Không tạo được ảnh. Bạn có thể chụp màn hình phiếu thay thế.')}
+  b.textContent='📸 Tạo ảnh để gửi'; b.disabled=false;
+};
+
+drawSaved(); render();
+</script>
+</body>
+</html>
