@@ -198,7 +198,7 @@ dialog{border:4px solid #6cb847}
    <h2>📅 Ngày đi học</h2>
    <div class="row">
     <label>Ngày bắt đầu<input id="start" type="date"></label>
-    <label>Số buổi cần tạo<input id="gen" type="number" inputmode="numeric" value="24"></label>
+    <label>Số buổi cần tạo<input id="gen" type="number" inputmode="numeric" value="10"></label>
    </div>
    <div class="days" id="wd"></div>
    <div class="btns"><button type="button" id="mk">Tạo danh sách ngày</button></div>
@@ -250,6 +250,8 @@ $('wd').innerHTML=WD.map(([t,v],i)=>`<label><input type="checkbox" value="${v}" 
 (function(){const d=new Date();$('start').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 
 const pad=n=>String(n).padStart(2,'0');
+const syncGen=()=>{$('gen').value=$('count').value};
+$('count').addEventListener('input',syncGen);
 $('mk').onclick=()=>{
   const days=[...document.querySelectorAll('#wd input:checked')].map(i=>+i.value);
   const n=+$('gen').value||0; if(!$('start').value||!days.length||!n){return}
@@ -311,6 +313,7 @@ function drawSaved(){
   $('saved').querySelectorAll('button').forEach(b=>b.onclick=()=>{
     const s=loadSaved()[+b.dataset.i]; if(!s)return;
     FIELDS.forEach(f=>{if(s[f]!==undefined)$(f).value=s[f]});
+    syncGen();
     absent.clear();(s.absent||[]).forEach(a=>absent.add(a));$('showAbs').checked=!!s.showAbs; render();
   });
 }
