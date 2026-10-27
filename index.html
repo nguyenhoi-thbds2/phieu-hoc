@@ -233,9 +233,9 @@ dialog{border:4px solid #6cb847}
 
 <dialog id="dlg">
  <strong>Ảnh phiếu học phí</strong>
- <p class="hint">Nhấn giữ vào ảnh rồi chọn “Lưu ảnh” (hoặc chuột phải → Lưu ảnh).</p>
+ <p class="hint">Bấm “Tải ảnh về” để lưu vào máy. Nếu điện thoại không tự tải, nhấn giữ vào ảnh rồi chọn “Lưu ảnh”.</p>
  <img id="out" alt="Phiếu học phí">
- <div class="btns"><button class="sec" type="button" onclick="document.getElementById('dlg').close()">Đóng</button></div>
+ <div class="btns"><button type="button" id="dl">⬇️ Tải ảnh về</button><button class="sec" type="button" onclick="document.getElementById('dlg').close()">Đóng</button></div>
 </dialog>
 
 <script>
@@ -324,9 +324,33 @@ $('shot').onclick=async()=>{
   const b=$('shot'); b.textContent='Đang tạo ảnh…'; b.disabled=true;
   try{
     const c=await html2canvas($('receipt'),{scale:2,backgroundColor:null,useCORS:true});
-    $('out').src=c.toDataURL('image/png'); $('dlg').showModal();
+    $('out').src=c.toDataURL('image/png');
+    lastBlob=await new Promise(r=>c.toBlob(r,'image/png'));
+    $('dlg').showModal();
   }catch(e){alert('Không tạo được ảnh. Bạn có thể chụp màn hình phiếu thay thế.')}
   b.textContent='📸 Tạo ảnh để gửi'; b.disabled=false;
+};
+
+let lastBlob=null;
+function fileName(){
+  const n=($('student').value||'').trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+  return 'phieu_hoc_phi'+(n?'_'+n:'')+'.png';
+}
+$('dl').onclick=async()=>{
+  if(!lastBlob)return;
+  const name=fileName();
+  try{
+    const url=URL.createObjectURL(lastBlob);
+    const a=document.createElement('a');
+    a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+  }catch(e){
+    try{
+      const f=new File([lastBlob],name,{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}
+    }catch(_){}
+    alert('Không tải được tự động. Hãy nhấn giữ vào ảnh rồi chọn “Lưu ảnh”.');
+  }
 };
 
 drawSaved(); render();
