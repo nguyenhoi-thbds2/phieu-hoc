@@ -36,6 +36,17 @@ button.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}
 .saved{display:flex;flex-wrap:wrap;gap:6px}
 .saved button{padding:5px 10px;font-weight:500;font-size:13px}
 .hint{font-size:12px;color:var(--mut);margin:0}
+.hist{display:grid;gap:6px;max-height:210px;overflow:auto}
+.hist .it{display:flex;gap:6px;align-items:stretch}
+.hist .use{flex:1;text-align:left;font-weight:500;font-size:13px;padding:7px 10px;background:var(--field);color:var(--ink);border:1px solid var(--line);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hist .use:hover{border-color:var(--pri)}
+.hist .rm{padding:0 10px;background:transparent;color:var(--mut);border:1px solid var(--line)}
+.hist-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hist-h button{padding:3px 9px;font-size:12px;font-weight:500}
+button.del{background:transparent;color:#c0452f;border:1px solid #c0452f}
+button.del.confirm{background:#c0452f;color:#fff}
+button.del:disabled{opacity:.4;cursor:not-allowed}
+.saved button.cur{border-color:var(--pri);box-shadow:0 0 0 1px var(--pri)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chips button{padding:6px 10px;font-size:13px;font-weight:600;background:var(--field);color:var(--ink);border:1px solid var(--line)}
 .chips button[aria-pressed="true"]{background:#c0452f;color:#fff;border-color:#c0452f;text-decoration:line-through}
@@ -178,7 +189,8 @@ dialog{border:4px solid #6cb847}
    </div>
    <label>Học sinh<input id="student" value=""></label>
    <div class="saved" id="saved"></div>
-   <div class="btns"><button class="sec" id="saveStu" type="button">Lưu học sinh này</button></div>
+   <div class="btns"><button class="sec" id="saveStu" type="button">Lưu học sinh này</button><button class="del" id="delStu" type="button" disabled>🗑 Xóa học sinh này</button></div>
+   <p class="hint" id="stuMsg" aria-live="polite"></p>
   </div>
 
   <div class="panel">
@@ -212,7 +224,11 @@ dialog{border:4px solid #6cb847}
   <div class="panel">
    <h2>💌 Nhận xét và lưu ý</h2>
    <label>Nhận xét của giáo viên<textarea id="cmt">Duy Mạnh chăm ngoan và luôn cố gắng hoàn thành mọi nhiệm vụ học tập mà cô giao. Con biết nhận diện số và lượng; làm tính cộng trừ và so sánh trong phạm vi 10 ở mức độ cơ bản.</textarea></label>
-   <label>Lưu ý cho phụ huynh<textarea id="note">Phụ huynh vui lòng đóng học phí trước ngày 05 hằng tháng. Nếu con cần nghỉ, ba mẹ thông báo để cô sắp xếp lịch học bù cho con.</textarea></label>
+   <div id="cmtHistBox" hidden>
+    <div class="hist-h"><p class="hint">🕘 Nhận xét đã dùng trong phiên này (bấm để dùng lại)</p><button class="sec" type="button" id="cmtHistClear">Xóa lịch sử</button></div>
+    <div class="hist" id="cmtHist"></div>
+   </div>
+   <label>Lưu ý cho phụ huynh<textarea id="note"> Nếu HS nghỉ học, Phụ huynh vui lòng thông báo cho cô giáo trước giờ học. Xin cảm ơn!</textarea></label>
   </div>
 
   <div class="panel">
@@ -307,23 +323,111 @@ const KEY='phieuhp_students';
 function loadSaved(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}}
 function writeSaved(a){try{localStorage.setItem(KEY,JSON.stringify(a))}catch(e){}}
 const FIELDS=['club','title','kind','student','fee','count','exLabel','exAmt','dates','cmt','note','bank'];
+// ---- nhận xét: giữ lời nhận xét cuối + lịch sử trong phiên ----
+const HKEY='phieuhp_cmt_hist', LKEY='phieuhp_last_cmt', NKEY='phieuhp_cmt_name';
+function loadHist(){try{return JSON.parse(sessionStorage.getItem(HKEY)||'[]')}catch(e){return []}}
+function writeHist(a){try{sessionStorage.setItem(HKEY,JSON.stringify(a))}catch(e){}}
+// cmtName = tên đang đứng đầu lời nhận xét (để tự đổi khi sang học sinh khác)
+let cmtName='Duy Mạnh';
+const curName=()=>($('student').value||'').trim();
+// lịch sử lưu dạng mẫu "{ten}…" để dùng lại cho bất kỳ học sinh nào
+const toTpl=t=>(cmtName&&t.startsWith(cmtName))?'{ten}'+t.slice(cmtName.length):t;
+const fromTpl=t=>t.replace(/^\{ten\}/,curName()||cmtName||'');
+function addHist(t){
+  t=(t||'').trim(); if(!t)return;
+  const tp=toTpl(t);
+  const a=loadHist().filter(x=>x!==tp); a.unshift(tp); writeHist(a.slice(0,30)); drawHist();
+}
+function keepLast(){try{localStorage.setItem(LKEY,$('cmt').value);localStorage.setItem(NKEY,cmtName)}catch(e){}}
+// đổi tên ở đầu lời nhận xét thành tên học sinh đang tạo phiếu
+function syncCmtName(){
+  const n=curName(), c=$('cmt');
+  if(!n)return;
+  if(cmtName&&c.value.startsWith(cmtName)){
+    if(cmtName!==n){c.value=n+c.value.slice(cmtName.length);cmtName=n;keepLast()}
+  }else if(!c.value.trim()){
+    /* ô trống: không tự điền */
+  }
+}
+function drawHist(){
+  const a=loadHist(), box=$('cmtHistBox');
+  box.hidden=!a.length;
+  $('cmtHist').innerHTML=a.map((t,i)=>{const v=fromTpl(t);return `<div class="it"><button type="button" class="use" data-i="${i}" title="${esc(v)}">${esc(v)}</button><button type="button" class="rm" data-i="${i}" aria-label="Xóa nhận xét này khỏi lịch sử">×</button></div>`}).join('');
+  $('cmtHist').querySelectorAll('.use').forEach(b=>b.onclick=()=>{
+    const t=loadHist()[+b.dataset.i]; if(t===undefined)return;
+    $('cmt').value=fromTpl(t); if(curName())cmtName=curName(); keepLast(); render();
+  });
+  $('cmtHist').querySelectorAll('.rm').forEach(b=>b.onclick=()=>{
+    const a=loadHist(); a.splice(+b.dataset.i,1); writeHist(a); drawHist();
+  });
+}
+$('cmtHistClear').onclick=()=>{writeHist([]);drawHist()};
+$('cmt').addEventListener('input',()=>{
+  const n=curName(); if(n&&$('cmt').value.startsWith(n))cmtName=n; // người dùng tự viết tên mới ở đầu
+  keepLast();
+});
+$('cmt').addEventListener('change',()=>addHist($('cmt').value));
+try{
+  const l=localStorage.getItem(LKEY);
+  if(l!==null&&l.trim()){$('cmt').value=l;cmtName=localStorage.getItem(NKEY)||''}
+}catch(e){}
+if(!$('cmt').value.startsWith(cmtName))cmtName='';
+$('student').addEventListener('input',()=>{syncCmtName();render()});
+
+function stuName(){return ($('student').value||'').trim()}
+function findIdx(a){const n=stuName();return n?a.findIndex(x=>(x.student||'').trim()===n):-1}
+function say(t){$('stuMsg').textContent=t||''}
+let delTimer=null;
+function resetDel(){
+  clearTimeout(delTimer);delTimer=null;
+  const b=$('delStu');b.classList.remove('confirm');b.textContent='🗑 Xóa học sinh này';
+}
+function updateDel(){
+  const a=loadSaved(),i=findIdx(a);
+  $('delStu').disabled=i<0;
+  $('saved').querySelectorAll('button').forEach(b=>b.classList.toggle('cur',+b.dataset.i===i));
+  if(i<0)resetDel();
+}
 function drawSaved(){
   const a=loadSaved();
   $('saved').innerHTML=a.length?a.map((s,i)=>`<button class="sec" type="button" data-i="${i}">${esc(s.student||'Chưa đặt tên')}</button>`).join(''):'';
   $('saved').querySelectorAll('button').forEach(b=>b.onclick=()=>{
     const s=loadSaved()[+b.dataset.i]; if(!s)return;
-    FIELDS.forEach(f=>{if(s[f]!==undefined)$(f).value=s[f]});
+    addHist($('cmt').value); // nhớ lời nhận xét đang viết
+    FIELDS.forEach(f=>{if(f!=='cmt'&&s[f]!==undefined)$(f).value=s[f]}); // giữ nguyên nhận xét hiện tại
     syncGen();
+    syncCmtName();
     absent.clear();(s.absent||[]).forEach(a=>absent.add(a));$('showAbs').checked=!!s.showAbs; render();
+    say('');resetDel();updateDel();
   });
+  updateDel();
 }
 $('saveStu').onclick=()=>{
   const s={};FIELDS.forEach(f=>s[f]=$(f).value);s.absent=[...absent];s.showAbs=$('showAbs').checked;
-  const a=loadSaved(); const i=a.findIndex(x=>x.student===s.student);
+  const a=loadSaved(); const i=findIdx(a);
   if(i>=0)a[i]=s; else a.push(s); writeSaved(a); drawSaved();
+  addHist($('cmt').value);
+  say('Đã lưu học sinh “'+(stuName()||'Chưa đặt tên')+'”.');
 };
+// delete saved student: press once to arm, press again within 4s to confirm
+$('delStu').onclick=()=>{
+  const b=$('delStu');
+  const a=loadSaved(),i=findIdx(a);
+  if(i<0){say('Học sinh này chưa được lưu.');return}
+  if(!b.classList.contains('confirm')){
+    b.classList.add('confirm');b.textContent='⚠️ Bấm lần nữa để xóa';
+    say('Bấm lại để xác nhận xóa “'+(a[i].student||'Chưa đặt tên')+'” khỏi danh sách đã lưu.');
+    clearTimeout(delTimer);delTimer=setTimeout(()=>{resetDel();say('')},4000);
+    return;
+  }
+  const name=a[i].student||'Chưa đặt tên';
+  a.splice(i,1);writeSaved(a);resetDel();drawSaved();
+  say('Đã xóa học sinh “'+name+'” khỏi danh sách đã lưu.');
+};
+$('student').addEventListener('input',()=>{say('');resetDel();updateDel()});
 
 $('shot').onclick=async()=>{
+  addHist($('cmt').value);
   const b=$('shot'); b.textContent='Đang tạo ảnh…'; b.disabled=true;
   try{
     const c=await html2canvas($('receipt'),{scale:2,backgroundColor:null,useCORS:true});
@@ -356,7 +460,7 @@ $('dl').onclick=async()=>{
   }
 };
 
-drawSaved(); render();
+drawHist(); drawSaved(); render();
 </script>
 </body>
 </html>
